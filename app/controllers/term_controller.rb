@@ -15,4 +15,8 @@ class TermController < ApplicationController
     def term_params
       params.require(:term).permit(:query)
     end
+    def analytics
+      @terms = Term.all
+    end
+    
   end  

@@ -1,0 +1,7 @@
+<h1>Searchbox main screen</h1>
+
+<%= form_with model: Term.new, url: term_index_path, method: :post do |form| %>
+  <%= form.label :query %>
+  <%= form.text_field :query %>
+  <%= form.submit %>
+<% end %>
