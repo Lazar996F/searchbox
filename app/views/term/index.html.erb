@@ -1,68 +1,117 @@
-<h1>Searchbox main screen</h1>
+<h3>Helpjuice Full-Stack (Rails & Vanilla JS) Internship Test</h3>
 
 <%= form_with model: Term.new, url: term_index_path, method: :post do |form| %>
-  <%= form.label :query %>
-  <%= form.text_field :query, id: 'searchInput' %>
+ 
+  <%= form.text_field :query, id: 'searchInput', placeholder: 'Type here...' %>
 <% end %>
 
 <table>
   <thead>
     <tr>
-      <th>Query</th>
-      <th>Created At</th>
+      <th>Searches</th>
     </tr>
   </thead>
   <tbody id="termTableBody">
     <% @terms.each do |term| %>
       <tr>
         <td><%= term.query %></td>
-        <td><%= term.ip_address %></td>
-        <td><%= term.created_at %></td>
       </tr>
     <% end %>
   </tbody>
 </table>
 
 <script>
-  let timeout;
-
+  let typeTimeout;
+  let mainTimeout;
   document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('searchInput');
     const termTableBody = document.getElementById('termTableBody');
     const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
+    let searchedTerms = '';
+
     searchInput.addEventListener('input', () => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => {
+      clearTimeout(mainTimeout);
+      mainTimeout = setTimeout(() => {
         const query = searchInput.value.trim();
 
         if (query !== '') {
           // Include CSRF token in the headers
+          searchedTerms = query
+
+         clearTimeout(typeTimeout);
+         typeTimeout = setTimeout(() => {
           const headers = {
             'Content-Type': 'application/json',
             'X-CSRF-Token': csrfToken,
           };
-
           // Save the term and update the table
           fetch('/term', {
             method: 'POST',
             headers: headers,
-            body: JSON.stringify({ query }),
+            body: JSON.stringify({ query: searchedTerms }),
           })
-            .then(response => response.json())
-            .then(term => {
+            .then(response => {
+              const test = response.json()
+
               const row = document.createElement('tr');
-              const createdAt = new Date(term.created_at).toLocaleString();
               row.innerHTML = `
-                <td>${term.query + 'H'}</td> <!-- Add 'H' at the end of the query -->
-                <td>${term.ip_address}</td>
-                <td>${createdAt}</td>
+                <td>${searchedTerms}</td>
               `;
               termTableBody.appendChild(row);
-            })
-            .catch(error => console.error(error));
+            })            
+            .catch(error => console.error(error))
+            .finally(() => {
+              searchedTerms = ''
+              searchInput.value = ''
+            });
+          }, 500)
         }
-      }, 1000); // Adjust the delay as needed
+      }, 1600);
     });
   });
 </script>
+<style>
+  body{
+    padding: 1rem;
+  }
+  h3 {
+    text-align: center;
+  }
+  table{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  tbody {
+    text-align: center;
+  }
+  table tr{
+    border-bottom: 1px solid #a1a1a1;
+  }
+
+  input{
+    padding: .5rem;
+    border: 1px solid #a1a1a1;
+    border-radius: 5px;
+    width: 20rem;
+    margin: auto;
+  }
+
+  input:focus{
+    outline: none;
+  }
+
+  form {
+    justify-content: center;
+    display: flex;
+  }
+
+  thead {
+    margin-bottom: 20px;
+    margin-top: 20px;
+    font-size: 24px;
+  }
+</style>
