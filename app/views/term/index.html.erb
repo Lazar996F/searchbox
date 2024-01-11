@@ -2,8 +2,7 @@
 
 <%= form_with model: Term.new, url: term_index_path, method: :post do |form| %>
   <%= form.label :query %>
-  <%= form.text_field :query %>
-  <%= form.submit %>
+  <%= form.text_field :query, id: 'searchInput' %>
 <% end %>
 
 <table>
@@ -13,7 +12,7 @@
       <th>Created At</th>
     </tr>
   </thead>
-  <tbody>
+  <tbody id="termTableBody">
     <% @terms.each do |term| %>
       <tr>
         <td><%= term.query %></td>
@@ -23,3 +22,47 @@
     <% end %>
   </tbody>
 </table>
+
+<script>
+  let timeout;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('searchInput');
+    const termTableBody = document.getElementById('termTableBody');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+    searchInput.addEventListener('input', () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        const query = searchInput.value.trim();
+
+        if (query !== '') {
+          // Include CSRF token in the headers
+          const headers = {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken,
+          };
+
+          // Save the term and update the table
+          fetch('/term', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({ query }),
+          })
+            .then(response => response.json())
+            .then(term => {
+              const row = document.createElement('tr');
+              const createdAt = new Date(term.created_at).toLocaleString();
+              row.innerHTML = `
+                <td>${term.query + 'H'}</td> <!-- Add 'H' at the end of the query -->
+                <td>${term.ip_address}</td>
+                <td>${createdAt}</td>
+              `;
+              termTableBody.appendChild(row);
+            })
+            .catch(error => console.error(error));
+        }
+      }, 1000); // Adjust the delay as needed
+    });
+  });
+</script>
